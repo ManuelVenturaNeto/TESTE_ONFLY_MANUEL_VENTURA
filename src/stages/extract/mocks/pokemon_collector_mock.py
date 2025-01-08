@@ -42,8 +42,10 @@ def mock_test_get_unique_pokemon_data(url):
         }
 
 
-def collect_essential_informations():
-
+def mock_collect_essential_informations():
+    """
+    funcion to garantee valer extracted from collect_essential_informations
+    """
     return {
         "1": {
             "name": "bulbasaur",
