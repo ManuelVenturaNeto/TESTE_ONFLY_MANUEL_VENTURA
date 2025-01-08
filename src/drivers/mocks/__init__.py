@@ -1,0 +1,1 @@
+from .http_requester_mock import mock_get_100_pokemons_from_api
