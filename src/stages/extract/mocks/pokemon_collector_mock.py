@@ -1,4 +1,4 @@
-# pylint: disable=line-too-long, R1710
+# pylint: disable=line-too-long, R1710, R0801
 
 
 def mock_get_100_pokemons_from_api():
@@ -16,7 +16,7 @@ def mock_get_100_pokemons_from_api():
     }
 
 
-def mock_test_get_unique_pokemon_data(url):
+def mock_get_unique_pokemon_data(url):
     """
     funcion to mock data to simule an API access
     """

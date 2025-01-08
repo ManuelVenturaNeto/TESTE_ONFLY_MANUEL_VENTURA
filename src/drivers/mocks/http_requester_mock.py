@@ -28,7 +28,7 @@ def mock_get_100_pokemons_from_api_for_collections():
     }
 
 
-def mock_test_get_unique_pokemon_data():
+def mock_get_unique_pokemon_data():
     """
     funcion to mock data to simule an API access
     """

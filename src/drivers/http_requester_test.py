@@ -3,7 +3,7 @@ from unittest.mock import patch
 from .http_requester import HttpRequester
 from .mocks.http_requester_mock import (
     mock_get_100_pokemons_from_api,
-    mock_test_get_unique_pokemon_data,
+    mock_get_unique_pokemon_data,
 )
 
 
@@ -40,7 +40,7 @@ class TestHttpRequester(unittest.TestCase):
         testing the get_unique_pokemon_data
         """
 
-        mock_response = mock_test_get_unique_pokemon_data()
+        mock_response = mock_get_unique_pokemon_data()
 
         http_request = HttpRequester()
 
