@@ -1,56 +1,94 @@
-import unittest
-from unittest.mock import patch
-from .http_requester import HttpRequester
-from .mocks.http_requester_mock import (
-    mock_get_100_pokemons_from_api,
-    mock_get_unique_pokemon_data,
-)
+# pylint: disable=W0621
+
+from unittest.mock import patch, MagicMock
+import pytest
+from src.drivers.http_requester import HttpRequester
+from src.errors.driver_error import DriverError
 
 
-class TestHttpRequester(unittest.TestCase):
+@pytest.fixture
+def mock_http_requester():
     """
-    testing the get_100_pokemons_from_ap from http_requeter.py
-    and testing the get_unique_pokemon_data from http_requeter.py
+    Fixture to instantiate the HttpRequester class
     """
+    return HttpRequester()
 
-    @patch("requests.get")
-    def test_get_100_pokemons_from_api(self, mock_get):
-        """
-        testing the get_100_pokemons_from_api
-        """
 
-        mock_response = mock_get_100_pokemons_from_api()
+@patch("requests.get")
+def test_get_100_pokemons_from_api_success(mock_get, mock_http_requester):
+    """
+    Test successful response from get_100_pokemons_from_api
+    """
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "results": [
+            {"name": "Pikachu", "url": "https://pokeapi.co/api/v2/pokemon/25/"},
+            {"name": "Charizard", "url": "https://pokeapi.co/api/v2/pokemon/6/"},
+        ]
+    }
+    mock_get.return_value = mock_response
 
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = mock_response
+    result = mock_http_requester.get_100_pokemons_from_api()
 
-        requester = HttpRequester()
+    assert result["status_code"] == 200
+    assert "informations" in result
+    assert len(result["informations"]["results"]) == 2
+    assert result["informations"]["results"][0]["name"] == "Pikachu"
 
-        result = requester.get_100_pokemons_from_api()
 
-        assert "status_code" in result
-        assert "informations" in result
-        assert result["status_code"] == 200
-        assert len(result["informations"]["results"]) == 2
-        assert result["informations"]["results"][0]["name"] == "bulbasaur"
+@patch("requests.get")
+def test_get_100_pokemons_from_api_failure(mock_get, mock_http_requester):
+    """
+    Test failed response from get_100_pokemons_from_api
+    """
+    mock_response = MagicMock()
+    mock_response.status_code = 404
+    mock_response.json.side_effect = Exception("Not Found")
+    mock_get.return_value = mock_response
 
-    @patch("requests.get")
-    def test_get_unique_pokemon_data(self, mock_get):
-        """
-        testing the get_unique_pokemon_data
-        """
+    # Here we are asserting that the exception is raised
+    with pytest.raises(DriverError, match="Not Found"):
+        mock_http_requester.get_100_pokemons_from_api()
 
-        mock_response = mock_get_unique_pokemon_data()
 
-        http_request = HttpRequester()
+@patch("requests.get")
+def test_get_unique_pokemon_data_success(mock_get, mock_http_requester):
+    """
+    Test successful response from get_unique_pokemon_data
+    """
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "name": "Pikachu",
+        "base_experience": 112,
+        "types": [{"type": {"name": "Electric"}}],
+        "stats": [
+            {"stat": {"name": "hp"}, "base_stat": 35},
+            {"stat": {"name": "attack"}, "base_stat": 55},
+            {"stat": {"name": "defense"}, "base_stat": 40},
+        ],
+    }
+    mock_get.return_value = mock_response
 
-        mock_get.return_value.json.return_value = mock_response
+    url = "https://pokeapi.co/api/v2/pokemon/25/"
+    result = mock_http_requester.get_unique_pokemon_data(url)
 
-        url = "https://pokeapi.co/api/v2/pokemon/1/"
+    assert result["name"] == "Pikachu"
+    assert result["base_experience"] == 112
+    assert result["types"][0]["type"]["name"] == "Electric"
+    assert result["stats"][0]["stat"]["name"] == "hp"
+    assert result["stats"][0]["base_stat"] == 35
 
-        get_dictionary = http_request.get_unique_pokemon_data(url=url)
 
-        assert len(get_dictionary.keys()) == 20
-        assert get_dictionary["name"] == "bulbasaur"
-        assert get_dictionary["weight"] == 69
-        assert get_dictionary["abilities"][0]["ability"]["name"] == "overgrow"
+@patch("requests.get")
+def test_get_unique_pokemon_data_failure(mock_get, mock_http_requester):
+    """
+    Test failed response from get_unique_pokemon_data
+    """
+    mock_response = MagicMock()
+    mock_response.json.side_effect = Exception("Simulated error")
+    mock_get.return_value = mock_response
+
+    url = "https://pokeapi.co/api/v2/pokemon/99999/"
+    with pytest.raises(DriverError, match="Simulated error"):
+        mock_http_requester.get_unique_pokemon_data(url)

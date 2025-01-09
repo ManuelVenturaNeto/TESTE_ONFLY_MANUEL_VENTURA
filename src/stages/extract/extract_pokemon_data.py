@@ -11,7 +11,6 @@ class ExtractPokemonData:
 
     def __init__(self):
         self.http_requester = HttpRequester()
-        self.collection = {}
 
     def collect_essential_informations(self) -> ExtractContract:
         """
@@ -19,8 +18,8 @@ class ExtractPokemonData:
         """
 
         try:
-            entry = self.http_requester.get_100_pokemons_from_api()
-            all_pokemons = entry["informations"]["results"]
+            data_entry = self.http_requester.get_100_pokemons_from_api()
+            all_pokemons = data_entry["informations"]["results"]
 
             pokemon_general_dict = {}
 
@@ -63,12 +62,13 @@ class ExtractPokemonData:
                     None,
                 )
                 pokemon_individual_dictionary = {
-                    "name": name,
-                    "base_experience": xp_base,
-                    "types": types,
-                    "hp": hp,
-                    "attack": atack,
-                    "defense": defence,
+                    "Id": pokemon_id,
+                    "Nome": name,
+                    "Experiencia_Base": xp_base,
+                    "Tipos": types,
+                    "HP": hp,
+                    "Ataque": atack,
+                    "Defesa": defence,
                 }
 
                 pokemon_general_dict[pokemon_id] = pokemon_individual_dictionary

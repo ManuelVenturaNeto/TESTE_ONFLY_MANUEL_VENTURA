@@ -1,5 +1,6 @@
 from typing import Dict
 import requests
+from src.errors.driver_error import DriverError
 from .interfaces.http_request import HttpRequesterInterface
 
 
@@ -20,18 +21,15 @@ class HttpRequester(HttpRequesterInterface):
 
         response = requests.get(self.__url, timeout=10)
 
-        if response.status_code == 200:
+        # if the function connect with API ir continue
+        try:
             return {
                 "status_code": response.status_code,
                 "informations": response.json(),
             }
-
-        return {
-            "status_code": response.status_code,
-            "informations": {
-                "details": response.text,
-            },
-        }
+        # if the function cannot connect with API raise an error
+        except Exception as exception:  # pylint: disable=broad-except
+            raise DriverError(str(exception)) from exception
 
     def get_unique_pokemon_data(self, url: str) -> Dict[str, dict]:
         """
@@ -40,8 +38,14 @@ class HttpRequester(HttpRequesterInterface):
         - return: a dictonary with all informations about that pokemon
         """
 
-        response = requests.get(url, timeout=10)
+        # if the function connect with API ir continue
+        try:
+            response = requests.get(url, timeout=10)
 
-        data = response.json()
+            data = response.json()
 
-        return data
+            return data
+
+        # if the function cannot connect with API raise an error
+        except Exception as exception:  # pylint: disable=broad-except
+            raise DriverError(str(exception)) from exception
