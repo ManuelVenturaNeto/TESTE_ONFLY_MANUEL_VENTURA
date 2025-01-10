@@ -1,9 +1,14 @@
 # pylint: disable=W0621
 
+import logging
 from unittest.mock import patch, MagicMock
 import pytest
 from src.drivers.http_requester import HttpRequester
 from src.errors.driver_error import DriverError
+
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -36,6 +41,8 @@ def test_get_100_pokemons_from_api_success(mock_get, mock_http_requester):
     assert len(result["informations"]["results"]) == 2
     assert result["informations"]["results"][0]["name"] == "Pikachu"
 
+    logger.debug("Test 'test_get_100_pokemons_from_api_success' passed successfully")
+
 
 @patch("requests.get")
 def test_get_100_pokemons_from_api_failure(mock_get, mock_http_requester):
@@ -50,6 +57,8 @@ def test_get_100_pokemons_from_api_failure(mock_get, mock_http_requester):
     # Here we are asserting that the exception is raised
     with pytest.raises(DriverError, match="Not Found"):
         mock_http_requester.get_100_pokemons_from_api()
+
+    logger.debug("Test 'test_get_100_pokemons_from_api_failure' passed successfully")
 
 
 @patch("requests.get")
@@ -79,6 +88,8 @@ def test_get_unique_pokemon_data_success(mock_get, mock_http_requester):
     assert result["stats"][0]["stat"]["name"] == "hp"
     assert result["stats"][0]["base_stat"] == 35
 
+    logger.debug("Test 'test_get_unique_pokemon_data_success' passed successfully")
+
 
 @patch("requests.get")
 def test_get_unique_pokemon_data_failure(mock_get, mock_http_requester):
@@ -92,3 +103,5 @@ def test_get_unique_pokemon_data_failure(mock_get, mock_http_requester):
     url = "https://pokeapi.co/api/v2/pokemon/99999/"
     with pytest.raises(DriverError, match="Simulated error"):
         mock_http_requester.get_unique_pokemon_data(url)
+
+    logger.debug("Test 'test_get_unique_pokemon_data_failure' passed successfully")

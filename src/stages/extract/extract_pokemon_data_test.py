@@ -1,10 +1,14 @@
 # pylint: disable=W0621
 
+import logging
 from unittest.mock import MagicMock
 import pytest
 from src.stages.extract.extract_pokemon_data import ExtractPokemonData
 from src.errors.extract_error import ExtractError
 from src.stages.contracts.extract_contract import ExtractContract
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -84,6 +88,10 @@ def test_collect_essential_informations_success(mock_extractor):
     assert charizard["Ataque"] == 84
     assert charizard["Defesa"] == 78
 
+    logger.debug(
+        "Test 'test_collect_essential_informations_success' passed successfully"
+    )
+
 
 def test_collect_essential_informations_error(mock_extractor):
     """
@@ -100,3 +108,5 @@ def test_collect_essential_informations_error(mock_extractor):
         mock_extractor.collect_essential_informations()
 
     assert "Simulated API error" in str(excinfo.value)
+
+    logger.debug("Test 'ExtractError' passed successfully")

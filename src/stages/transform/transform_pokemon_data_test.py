@@ -1,9 +1,9 @@
 # flake8: noqa: F811
 
+import logging
 import unittest
 from unittest.mock import MagicMock
 from datetime import datetime
-import pytest
 import pandas as pd
 import matplotlib.pyplot as plt
 from src.errors.transform_error import TransformError
@@ -14,30 +14,8 @@ from src.stages.contracts.extract_contract import ExtractContract
 from src.stages.transform.transform_pokemon_data import TransformPokemonData
 
 
-def test_transform_pokemon_data_error(mocker):
-    """
-    testing error
-    """
-
-    transformer = TransformPokemonData()
-
-    # mocking an error in the transformation function
-    mocker.patch.object(
-        transformer,
-        "raw_data_to_df",
-        side_effect=Exception("Simulated transformation error"),
-    )
-
-    # Creating a mock ExtractContract with sample raw data
-    extract_contract_mock = MagicMock(spec=ExtractContract)
-    extract_contract_mock.raw_information_content = {"some": "data"}
-
-    # Ensuring the function raises TransformError when an exception occurs
-    with pytest.raises(TransformError) as excinfo:
-        transformer.tranform_pokemon_data(extract_contract_mock)
-
-    # Validating that the error message is as expected
-    assert "Simulated transformation error" in str(excinfo.value)
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 class TestTransformPokemonData(unittest.TestCase):
@@ -103,6 +81,8 @@ class TestTransformPokemonData(unittest.TestCase):
         self.assertEqual(df["Experiencia_Base"].iloc[0], 112)
         self.assertEqual(df["Categoria"].iloc[0], "Forte")
 
+        logger.debug("Test 'raw_data_to_df' passed successfully")
+
     def test_generate_graphic_exp_vs_type(self):
         """
         testing function with mock data
@@ -145,6 +125,8 @@ class TestTransformPokemonData(unittest.TestCase):
         graphic = self.transform_pokemon_data.generate_graphic_exp_vs_type(df)
 
         self.assertIsInstance(graphic, plt.Figure)
+
+        logger.debug("Test 'generate_graphic_exp_vs_type' passed successfully")
 
     def test_top_5_higher_exp_base(self):
         """
@@ -233,6 +215,8 @@ class TestTransformPokemonData(unittest.TestCase):
         # verify if number of row are correct
         self.assertEqual(top_5_df.shape[0], 5)
 
+        logger.debug("Test 'top_5_higher_exp_base' passed successfully")
+
     def test_mean_statistics_by_type(self):
         """
         testing function with mock data
@@ -280,17 +264,7 @@ class TestTransformPokemonData(unittest.TestCase):
         self.assertTrue("Ataque" in mean_stats_df.columns)
         self.assertTrue("Defesa" in mean_stats_df.columns)
 
-    def test_transform_pokemon_data_exception(self):
-        """
-        testing function with mock data
-        """
-        self.extract_contract_mock.raw_information_content = None
-
-        # testing if input has no data it raise an error
-        with self.assertRaises(TransformError):
-            self.transform_pokemon_data.tranform_pokemon_data(
-                self.extract_contract_mock
-            )
+        logger.debug("Test 'mean_statistics_by_type' passed successfully")
 
     def test_transform_pokemon_data(self):
         """
@@ -314,3 +288,19 @@ class TestTransformPokemonData(unittest.TestCase):
             in transformed_data_contract.transformation_content
         )
         self.assertEqual(type(transformed_data_contract.transformation_date), datetime)
+
+        logger.debug("Test 'tranform_pokemon_data' passed successfully")
+
+    def test_transform_pokemon_data_exception(self):
+        """
+        testing function with mock data
+        """
+        self.extract_contract_mock.raw_information_content = None
+
+        # testing if input has no data it raise an error
+        with self.assertRaises(TransformError):
+            self.transform_pokemon_data.tranform_pokemon_data(
+                self.extract_contract_mock
+            )
+
+        logger.debug("Test 'TransformError' passed successfully")

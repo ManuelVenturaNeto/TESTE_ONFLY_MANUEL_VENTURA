@@ -1,5 +1,8 @@
 # pylint: disable=W0621
+
+import logging
 import os
+from datetime import datetime
 from unittest.mock import patch
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -7,6 +10,10 @@ import pytest
 from src.errors.load_error import LoadError
 from src.stages.load.load_pokemon_files import LoadPokemonFiles
 from src.stages.contracts.transform_contract import TransformContract
+
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
@@ -52,17 +59,20 @@ def test_load_pokemon_files_success(mock_transform_contract):
 
     with patch.object(
         LoadPokemonFiles, "load_graphic_bar_by_type"
-    ) as mock_graphic, patch.object(LoadPokemonFiles, "generate_report") as mock_report:
-        loader.load(mock_transform_contract)
+    ) as mock_graphic, patch.object(
+        LoadPokemonFiles, "generate_report_csv"
+    ) as mock_report_csv:
+        loader.load_requered_files(mock_transform_contract)
 
-        # confirm if the methods was called if right args just once
+        # confirm if the methods were called with the right args just once
         mock_graphic.assert_called_once_with(
             mock_transform_contract.transformation_content["graphic_information"]
         )
-        mock_report.assert_called_once_with(
+        mock_report_csv.assert_called_once_with(
             mock_transform_contract.transformation_content["top_5_higher_exp_base"],
             mock_transform_contract.transformation_content["mean_statistics_by_type"],
         )
+    logger.debug("Test 'load_requered_files' passed successfully")
 
 
 def test_load_pokemon_files_error(mock_transform_contract):
@@ -79,9 +89,11 @@ def test_load_pokemon_files_error(mock_transform_contract):
         side_effect=Exception("Simulated error"),
     ):
         with pytest.raises(LoadError) as excinfo:
-            loader.load(mock_transform_contract)
+            loader.load_requered_files(mock_transform_contract)
 
         assert "Simulated error" in str(excinfo.value)
+
+    logger.debug("Test 'LoadError' passed successfully")
 
 
 def test_load_graphic_bar_by_type():
@@ -102,14 +114,20 @@ def test_load_graphic_bar_by_type():
             os.path.join(os.getcwd(), "outputs"), exist_ok=True
         )
         mock_savefig.assert_called_once_with(
-            os.path.join(os.getcwd(), "outputs", "pokemon_tipo_distribuicao.png"),
+            os.path.join(
+                os.getcwd(),
+                "outputs",
+                f"pokemon_tipo_distribuicao{datetime.now().strftime('_%Y-%m-%d_%H-%M')}.png",
+            ),
             format="png",
             dpi=300,
         )
         plt.close(graphic)
 
+    logger.debug("Test 'load_graphic_bar_by_type' passed successfully")
 
-def test_generate_report(mock_transform_contract):
+
+def test_generate_report_csv(mock_transform_contract):
     """
     testing function
     """
@@ -126,10 +144,12 @@ def test_generate_report(mock_transform_contract):
     with patch("os.makedirs") as mock_makedirs, patch(
         "pandas.DataFrame.to_csv"
     ) as mock_to_csv:
-        loader.generate_report(top_5_exp_base, mean_of_statistic)
+        loader.generate_report_csv(top_5_exp_base, mean_of_statistic)
 
-        # confirm if the methods was called if right args just once
+        # confirm if the methods were called with the right args just once
         mock_makedirs.assert_called_once_with(
             os.path.join(os.getcwd(), "outputs"), exist_ok=True
         )
         mock_to_csv.assert_called_once()
+
+    logger.debug("Test 'generate_report_csv' passed successfully")
