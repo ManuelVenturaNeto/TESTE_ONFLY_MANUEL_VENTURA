@@ -40,6 +40,14 @@ Por fim ele salva em uma pasta "outputs" dois arquivos:
   docker run -p 5000:5000 -v ${PWD}/outputs:/app/outputs flask-app
 ```
 
+## Logs
+
+Para isualizar os logs da aplicação após rodar:
+
+```bash
+  cat pipeline_logs.log
+```
+
 ## Rodando os testes
 
 Para rodar todos os testes, rode o seguinte comando:
