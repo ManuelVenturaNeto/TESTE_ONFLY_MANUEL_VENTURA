@@ -103,9 +103,7 @@ class LoadPokemonFiles:
             )
 
             # Prepare the data for the CSV
-            top_5_exp_base_str = top_5_exp_base[
-                ["Id", "Nome", "Experiencia_Base", "Tipos"]
-            ].to_string(index=False)
+            top_5_exp_base_str = top_5_exp_base.to_string(index=False)
             mean_of_statistic_str = mean_of_statistic.to_string(index=False)
 
             # Create the CSV manually

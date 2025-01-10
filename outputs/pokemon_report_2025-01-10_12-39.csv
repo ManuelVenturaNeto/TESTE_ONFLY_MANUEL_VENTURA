@@ -1,0 +1,29 @@
+Os 5 Pokemons com maior experiencia base:
+ Id      Nome  Experiencia_Base             Tipos  HP  Ataque  Defesa Categoria
+  6 Charizard               267    [fire, flying]  78      84      78     Forte
+  9 Blastoise               265           [water]  79      83     100     Forte
+  3  Venusaur               263   [grass, poison]  80      82      83     Forte
+ 62 Poliwrath               255 [water, fighting]  90      95      95     Forte
+ 34  Nidoking               253  [poison, ground]  81     102      77     Forte
+
+Médias de HP, Ataque e Defesa por tipo de Pokemon:
+    HP  Ataque  Defesa
+ 53.00   53.00   50.50
+ 42.00   54.00   62.00
+105.00   57.50   46.50
+ 72.50   98.33   65.00
+ 60.67   75.78   60.44
+ 57.58   72.83   55.67
+ 45.00   50.00   45.00
+ 59.55   74.82   62.73
+ 55.10   86.40   93.90
+ 70.00   82.50  130.00
+ 63.07   70.50   49.29
+ 61.06   67.26   56.23
+ 64.29   52.29   54.29
+ 52.50   85.00  126.25
+ 37.50   47.50   82.50
+ 62.89   72.11   81.44
+
+Rota da pasta para acessar o grafico de distribuição de quantidade de Pokemons por tipo:
+C:\Users\manue\OneDrive\Área de Trabalho\TESTE_ONFLY_MANUEL_VENTURA\outputs\pokemon_tipo_distribuicao_2025-01-10_12-39.png

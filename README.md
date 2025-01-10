@@ -1,5 +1,12 @@
 
 # Teste Técnico OnFly
+
+## Autor
+
+Manuel Ventura De Oliveira Neto
+- [@github](https://github.com/ManuelVenturaNeto)
+- [@linkedin](https://www.linkedin.com/inmanuel-ventura-neto/)
+
 ### Descrição
 
 Uma pipeline que consome dados de 100 pokemons da PokeAPI em formato json, trata esses dados com pandas, gera um grafico com o matplotlib. 
@@ -9,29 +16,6 @@ Por fim ele salva em uma pasta "outputs" dois arquivos:
 1. O primeiro é uma **imagem jpg** que apresenta a **distribuição de quantos pokemons tem em cada tipo de pokemon.** 
 2. O segundo arquivo salvo é um **arquivo csv** contendo 3 informações: um dataframe com os 5 pokemons de maior experiência base, um dataframe com a media do HP, Ataque e Defesa dos pokemons para cada tipo, e a referencia do link para a imagem do gráfico gerado.
 
-
-## Resumo da aplicação
-A pipeline é composta pelos três estágios típicos do processo ETL (Extract, Transform, Load), organizados da seguinte forma:
-
-1. **Extração (Extract):** A extração dos dados é iniciada a partir de uma pasta denominada Drivers, onde um método chamado HttpRequest é responsável por realizar as requisições à API para coletar as informações necessárias.
-
-A classe ExtractPokemonData, localizada na pasta extract, orquestra o processo de chamada à API e armazena os dados obtidos em uma tupla nomeada. Esta tupla funciona como um contrato, garantindo um formato padronizado para os dados antes de serem passados para o estágio de transformação. A tupla contém dois campos:
-
-- raw_information_content, que armazena as informações extraídas;
-- extraction_date, que registra o momento exato em que os dados foram extraídos.
-
-2. **Transformação (Transform):** No estágio de transformação, a classe TransformPokemonData recebe o contrato gerado na etapa anterior e processa os dados. O objetivo dessa transformação é:
-
-- Obter a imagem em formato PNG de cada Pokémon;
-- Criar um dataframe contendo os 5 Pokémons com a maior experiência base;
-- Gerar outro dataframe que calcula as médias de HP, ataque e defesa dos Pokémons agrupadas por tipo.
-
-Após a transformação dos dados, essas informações são armazenadas em uma nova tupla nomeada TransformContract.
-
-- transformation_content, que armazena os dados tratados;
-- transformation_date, que registra o momento exato em que os dados foram tratados.
-
-3. **Carga (Load):** Finalmente, o contrato transformado é enviado para a classe responsável por gerar os arquivos finais, contendo os dados já processados e prontos para uso.
 ## Instalação
 
 1. Clone o repositorio do github:
@@ -55,26 +39,43 @@ Após a transformação dos dados, essas informações são armazenadas em uma n
 ```terminal
   docker run -p 5000:5000 -v ${PWD}/outputs:/app/outputs flask-app
 ```
-## Autor
-
-Manuel Ventura De Oliveira Neto
-- [@github](https://github.com/ManuelVenturaNeto)
-- [@linkedin](https://www.linkedin.com/inmanuel-ventura-neto/)
-
 
 ## Rodando os testes
 
 Para rodar todos os testes, rode o seguinte comando:
 
 ```bash
-  pytest
+  docker run --rm flask-app pytest
 ```
 
 Para rodar um teste isoladamente rode o pytest com o caminho da pasta até o aquivo do seu teste, como no exemplo abaixo:
 
 ```bash
-  pytest -s -v src/stages/transform/transform_pokemon_data_test.py
+  docker run --rm flask-app pytest -s -v src/stages/load/load_pokemon_files_test.py
 ```
+
+### Resumo da aplicação
+A pipeline é composta pelos três estágios típicos do processo ETL (Extract, Transform, Load), organizados da seguinte forma:
+
+1. **Extração (Extract):** A extração dos dados é iniciada a partir de uma pasta denominada Drivers, onde um método chamado HttpRequest é responsável por realizar as requisições à API para coletar as informações necessárias.
+
+A classe ExtractPokemonData, localizada na pasta extract, orquestra o processo de chamada à API e armazena os dados obtidos em uma tupla nomeada. Esta tupla funciona como um contrato, garantindo um formato padronizado para os dados antes de serem passados para o estágio de transformação. A tupla contém dois campos:
+
+- raw_information_content, que armazena as informações extraídas;
+- extraction_date, que registra o momento exato em que os dados foram extraídos.
+
+2. **Transformação (Transform):** No estágio de transformação, a classe TransformPokemonData recebe o contrato gerado na etapa anterior e processa os dados. O objetivo dessa transformação é:
+
+- Obter a imagem em formato PNG de cada Pokémon;
+- Criar um dataframe contendo os 5 Pokémons com a maior experiência base;
+- Gerar outro dataframe que calcula as médias de HP, ataque e defesa dos Pokémons agrupadas por tipo.
+
+Após a transformação dos dados, essas informações são armazenadas em uma nova tupla nomeada TransformContract.
+
+- transformation_content, que armazena os dados tratados;
+- transformation_date, que registra o momento exato em que os dados foram tratados.
+
+3. **Carga (Load):** Finalmente, o contrato transformado é enviado para a classe responsável por gerar os arquivos finais, contendo os dados já processados e prontos para uso.
 
 
 ## Estrutura de pastas
