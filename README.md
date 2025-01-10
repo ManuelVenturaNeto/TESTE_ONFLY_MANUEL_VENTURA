@@ -42,7 +42,7 @@ Por fim ele salva em uma pasta "outputs" dois arquivos:
 
 ## Logs
 
-Para isualizar os logs da aplicação após rodar:
+Para visualizar os logs da aplicação após rodar:
 
 ```bash
   cat pipeline_logs.log
