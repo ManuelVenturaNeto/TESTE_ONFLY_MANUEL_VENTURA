@@ -30,13 +30,13 @@ class LoadPokemonFiles:
             top_5_exp_base = informations["top_5_higher_exp_base"]
             mean_of_statistic = informations["mean_statistics_by_type"]
 
-            self.load_graphic_bar_by_type(graphic)
+            graphic_path = self.load_graphic_bar_by_type(graphic)
 
             self.log.debug(
                 "Success in LoadPokemonFiles to using func: load_graphic_bar_by_type"
             )
 
-            self.generate_report_csv(top_5_exp_base, mean_of_statistic)
+            self.generate_report_csv(top_5_exp_base, mean_of_statistic, graphic_path)
 
             self.log.debug(
                 "Success in LoadPokemonFiles to using func: generate_report_csv"
@@ -48,7 +48,7 @@ class LoadPokemonFiles:
             )
             raise LoadError(str(exception)) from exception
 
-    def load_graphic_bar_by_type(self, graphic: plt.Figure) -> None:
+    def load_graphic_bar_by_type(self, graphic: plt.Figure) -> str:
         """
         Function to receive the graphic and sabe it on the root
         """
@@ -68,6 +68,8 @@ class LoadPokemonFiles:
             # save file
             graphic.savefig(output_path, format="png", dpi=300)
 
+            return output_path
+
             # close file
             # plt.close(graphic)
         except:
@@ -76,7 +78,10 @@ class LoadPokemonFiles:
             )
 
     def generate_report_csv(
-        self, top_5_exp_base: pd.DataFrame, mean_of_statistic: pd.DataFrame
+        self,
+        top_5_exp_base: pd.DataFrame,
+        mean_of_statistic: pd.DataFrame,
+        graphic_path: str,
     ) -> None:
         """
         Generate a CSV report with the following information:
@@ -87,31 +92,37 @@ class LoadPokemonFiles:
         # Prepare the report content
         try:
 
-            report_data = {
-                "Top_5_Exp_Base": [
-                    top_5_exp_base[
-                        ["Id", "Nome", "Experiencia_Base", "Tipos"]
-                    ].to_string(index=False)
-                ],
-                "Mean_Stats": [mean_of_statistic.to_string(index=False)],
-                "Graphic_Reference": ["outputs/pokemon_tipo_distribuicao.png"],
-            }
-
-            # Convert report data to DataFrame for better structure
-            report_df = pd.DataFrame(report_data)
-
-            # Define the output directory and file name
+            # Prepare the output directory
             output_dir = os.path.join(os.getcwd(), "outputs")
             os.makedirs(output_dir, exist_ok=True)
 
             # Define the output file path
             report_path = os.path.join(
                 output_dir,
-                f"pokemon_report_{datetime.now().strftime('_%Y-%m-%d_%H-%M')}.csv",
+                f"pokemon_report_{datetime.now().strftime('%Y-%m-%d_%H-%M')}.csv",
             )
 
-            # Save the DataFrame to CSV
-            report_df.to_csv(report_path, index=False)
+            # Prepare the data for the CSV
+            top_5_exp_base_str = top_5_exp_base[
+                ["Id", "Nome", "Experiencia_Base", "Tipos"]
+            ].to_string(index=False)
+            mean_of_statistic_str = mean_of_statistic.to_string(index=False)
+
+            # Create the CSV manually
+            with open(report_path, "w", encoding="utf-8") as csv_file:
+                # Add the Top 5 Pokémon data
+                csv_file.write("Os 5 Pokemons com maior experiencia base:\n")
+                csv_file.write(top_5_exp_base_str + "\n")
+
+                # Add the Mean Stats data
+                csv_file.write("\nMédias de HP, Ataque e Defesa por tipo de Pokemon:\n")
+                csv_file.write(mean_of_statistic_str + "\n")
+
+                # Add the graphic reference
+                csv_file.write(
+                    "\nRota da pasta para acessar o grafico de distribuição de quantidade de Pokemons por tipo:\n"
+                )
+                csv_file.write(f"{graphic_path}" + "\n")
         except:
             self.log.error(
                 "Error in LoadPokemonFiles to using func: generate_report_csv"

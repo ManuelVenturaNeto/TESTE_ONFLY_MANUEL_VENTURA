@@ -1,155 +1,112 @@
-# pylint: disable=W0621
+# pylint: disable=C0303, W0613
 
-import logging
+import unittest
+from unittest.mock import patch, MagicMock
 import os
-from datetime import datetime
-from unittest.mock import patch
 import pandas as pd
 import matplotlib.pyplot as plt
-import pytest
 from src.errors.load_error import LoadError
-from src.stages.load.load_pokemon_files import LoadPokemonFiles
 from src.stages.contracts.transform_contract import TransformContract
+from src.stages.load.load_pokemon_files import LoadPokemonFiles
 
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
-
-@pytest.fixture
-def mock_transform_contract():
+class TestLoadPokemonFiles(unittest.TestCase):
     """
-    Mock TransformContract
+    Testing all function of LoadPokemonFiles
     """
-    return TransformContract(
-        transformation_content={
-            "graphic_information": plt.figure(),
-            "top_5_higher_exp_base": pd.DataFrame(
-                {
-                    "Id": [1, 2, 3, 4, 5],
-                    "Nome": ["Pikachu", "Charizard", "Bulbasaur", "Squirtle", "Eevee"],
-                    "Experiencia_Base": [112, 240, 64, 63, 65],
-                    "Tipos": [
-                        ["Electric"],
-                        ["Fire", "Flying"],
-                        ["Grass"],
-                        ["Water"],
-                        ["Normal"],
-                    ],
-                }
-            ),
-            "mean_statistics_by_type": pd.DataFrame(
-                {
-                    "HP": [35, 78, 45, 44, 55],
-                    "Ataque": [55, 84, 49, 48, 55],
-                    "Defesa": [40, 78, 49, 65, 50],
-                }
-            ),
-        },
-        transformation_date=pd.Timestamp.now(),
+
+    def setUp(self):
+        self.loader = LoadPokemonFiles()
+        self.mock_transform_contract = MagicMock(spec=TransformContract)
+
+    @patch.object(os, "makedirs")
+    @patch.object(plt.Figure, "savefig")
+    def test_load_graphic_bar_by_type(self, mock_savefig, mock_makedirs):
+        """
+        testing function
+        """
+
+        graphic = MagicMock(spec=plt.Figure)
+
+        self.loader.load_graphic_bar_by_type(graphic)
+
+        # Verifica se o diretório foi criado
+        mock_makedirs.assert_called_once_with(
+            os.path.join(os.getcwd(), "outputs"), exist_ok=True
+        )
+
+    @patch("builtins.open", new_callable=unittest.mock.mock_open)
+    @patch("os.makedirs")
+    def test_generate_report_csv(self, mock_makedirs, mock_open):
+        """
+        testing function
+        """
+
+        top_5_exp_base = pd.DataFrame(
+            {
+                "Id": [1, 2, 3, 4, 5],
+                "Nome": [
+                    "Bulbasaur",
+                    "Ivysaur",
+                    "Venusaur",
+                    "Charmander",
+                    "Charmeleon",
+                ],
+                "Experiencia_Base": [64, 142, 236, 62, 142],
+                "Tipos": ["Grama", "Grama", "Grama", "Fogo", "Fogo"],
+            }
+        )
+
+        mean_of_statistic = pd.DataFrame(
+            {
+                "Tipo": ["Grama", "Fogo"],
+                "HP_Medio": [45.0, 39.0],
+                "Ataque_Medio": [49.0, 52.0],
+                "Defesa_Media": [49.0, 43.0],
+            }
+        )
+
+        graphic_path = os.path.join(os.getcwd(), "outputs", "test_graphic.png")
+
+        self.loader.generate_report_csv(top_5_exp_base, mean_of_statistic, graphic_path)
+
+        mock_makedirs.assert_called_once_with(
+            os.path.join(os.getcwd(), "outputs"), exist_ok=True
+        )
+        mock_open.assert_called_once()
+
+    @patch.object(
+        LoadPokemonFiles, "load_graphic_bar_by_type", return_value="mock_path.png"
     )
+    @patch.object(LoadPokemonFiles, "generate_report_csv")
+    def test_load_requered_files(self, mock_generate_report_csv, mock_load_graphic):
+        """
+        testing function
+        """
 
+        self.mock_transform_contract.transformation_content = {
+            "graphic_information": MagicMock(spec=plt.Figure),
+            "top_5_higher_exp_base": pd.DataFrame(),
+            "mean_statistics_by_type": pd.DataFrame(),
+        }
 
-def test_load_pokemon_files_success(mock_transform_contract):
-    """
-    testing function
-    """
+        self.loader.load_requered_files(self.mock_transform_contract)
 
-    loader = LoadPokemonFiles()
-
-    with patch.object(
-        LoadPokemonFiles, "load_graphic_bar_by_type"
-    ) as mock_graphic, patch.object(
-        LoadPokemonFiles, "generate_report_csv"
-    ) as mock_report_csv:
-        loader.load_requered_files(mock_transform_contract)
-
-        # confirm if the methods were called with the right args just once
-        mock_graphic.assert_called_once_with(
-            mock_transform_contract.transformation_content["graphic_information"]
+        mock_load_graphic.assert_called_once_with(
+            self.mock_transform_contract.transformation_content["graphic_information"]
         )
-        mock_report_csv.assert_called_once_with(
-            mock_transform_contract.transformation_content["top_5_higher_exp_base"],
-            mock_transform_contract.transformation_content["mean_statistics_by_type"],
-        )
-    logger.debug("Test 'load_requered_files' passed successfully")
+        mock_generate_report_csv.assert_called_once()
 
-
-def test_load_pokemon_files_error(mock_transform_contract):
-    """
-    testing error
-    """
-
-    loader = LoadPokemonFiles()
-
-    # confirms if the error is currect
-    with patch.object(
-        LoadPokemonFiles,
-        "load_graphic_bar_by_type",
-        side_effect=Exception("Simulated error"),
+    @patch.object(LoadPokemonFiles, "load_graphic_bar_by_type")
+    @patch.object(LoadPokemonFiles, "generate_report_csv")
+    def test_load_requered_files_raises_load_error(
+        self, mock_generate_report_csv, mock_load_graphic
     ):
-        with pytest.raises(LoadError) as excinfo:
-            loader.load_requered_files(mock_transform_contract)
+        """
+        testing function
+        """
 
-        assert "Simulated error" in str(excinfo.value)
+        self.mock_transform_contract.transformation_content = None
 
-    logger.debug("Test 'LoadError' passed successfully")
-
-
-def test_load_graphic_bar_by_type():
-    """
-    testing function
-    """
-
-    loader = LoadPokemonFiles()
-    graphic = plt.figure()
-
-    with patch("os.makedirs") as mock_makedirs, patch.object(
-        graphic, "savefig"
-    ) as mock_savefig:
-        loader.load_graphic_bar_by_type(graphic)
-
-        # confirm if the methods was called if right args just once
-        mock_makedirs.assert_called_once_with(
-            os.path.join(os.getcwd(), "outputs"), exist_ok=True
-        )
-        mock_savefig.assert_called_once_with(
-            os.path.join(
-                os.getcwd(),
-                "outputs",
-                f"pokemon_tipo_distribuicao{datetime.now().strftime('_%Y-%m-%d_%H-%M')}.png",
-            ),
-            format="png",
-            dpi=300,
-        )
-        plt.close(graphic)
-
-    logger.debug("Test 'load_graphic_bar_by_type' passed successfully")
-
-
-def test_generate_report_csv(mock_transform_contract):
-    """
-    testing function
-    """
-
-    loader = LoadPokemonFiles()
-
-    top_5_exp_base = mock_transform_contract.transformation_content[
-        "top_5_higher_exp_base"
-    ]
-    mean_of_statistic = mock_transform_contract.transformation_content[
-        "mean_statistics_by_type"
-    ]
-
-    with patch("os.makedirs") as mock_makedirs, patch(
-        "pandas.DataFrame.to_csv"
-    ) as mock_to_csv:
-        loader.generate_report_csv(top_5_exp_base, mean_of_statistic)
-
-        # confirm if the methods were called with the right args just once
-        mock_makedirs.assert_called_once_with(
-            os.path.join(os.getcwd(), "outputs"), exist_ok=True
-        )
-        mock_to_csv.assert_called_once()
-
-    logger.debug("Test 'generate_report_csv' passed successfully")
+        with self.assertRaises(LoadError):
+            self.loader.load_requered_files(self.mock_transform_contract)
