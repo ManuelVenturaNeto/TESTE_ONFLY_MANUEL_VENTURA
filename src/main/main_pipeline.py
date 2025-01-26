@@ -15,20 +15,29 @@ class MainPipeline:
         self.__load = LoadPokemonFiles()
 
         self.log = logging.getLogger(__name__)
-        self.log.debug("HttpRequester Started")
+        self.log.debug("MainPipeline Initialized")
 
-    def run_pipeline(self) -> None:
+    async def run_pipeline(self) -> None:
         """
         Executes the Extract, Transform, and Load (ETL) pipeline.
         """
-        extract_contract = self.__extract.collect_essential_informations()
+        try:
+            # Extract stage
+            self.log.debug("Starting Extract stage")
+            extract_contract = await self.__extract.collect_essential_informations()
+            self.log.debug("Successfully consumed API data with ExtractPokemonData")
 
-        self.log.debug("Success to consume API data with ExtractPokemonData")
+            # Transform stage
+            self.log.debug("Starting Transform stage")
+            transformed =  self.__transform.tranform_pokemon_data(extract_contract)
+            self.log.debug("Successfully transformed data with TransformPokemonData")
 
-        transformed = self.__transform.tranform_pokemon_data(extract_contract)
+            # Load stage
+            self.log.debug("Starting Load stage")
+            self.__load.load_requered_files(transformed)  # Make sure this method is async if needed
+            self.log.debug("Successfully generated files with LoadPokemonFiles")
 
-        self.log.debug("Success to refine data with TransformPokemonData")
-
-        self.__load.load_requered_files(transformed)
-
-        self.log.debug("Success generate files with LoadPokemonFiles")
+        except Exception as e:
+            # Log the error and re-raise the exception to propagate failure
+            self.log.error(f"Pipeline execution failed: {str(e)}")
+            raise e

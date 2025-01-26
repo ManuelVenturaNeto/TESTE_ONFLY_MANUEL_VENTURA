@@ -13,7 +13,6 @@ class TransformPokemonData:
     """
 
     def __init__(self):
-
         self.log = logging.getLogger(__name__)
         self.log.debug("TransformPokemonData Started")
 
@@ -69,56 +68,59 @@ class TransformPokemonData:
 
     def raw_data_to_df(self, extract_contract) -> pd.DataFrame:
         """
-        Function to trnasform raw data in a dataframe with currect params
-        -params:  extract_contract: row informatin get by extract class
-        -retrun:  df: a dataframe with typed information
+        Function to transform raw data in a dataframe with correct params
+        -params:  extract_contract: raw information get by extract class
+        -return:  df: a dataframe with typed information
         """
+
+        def classify_pokemon(exp) -> str:
+            """
+            Function to find how strong is the pokemon based in experience_base
+            -params: exp - experience point of that pokemon
+            -return: str: return a string describing how strong that pokemon is
+            """
+            if exp < 50:
+                return "Fraco"
+            if 50 <= exp <= 100:
+                return "Médio"
+            return "Forte"
+
         try:
             df = pd.DataFrame(extract_contract).T
 
             # Normalize pokemon's names
             df["Nome"] = df["Nome"].str.capitalize()
 
-            # guarantees that this data are int type
+            # Guarantees that this data are int type
             int_columns = ["Id", "Experiencia_Base", "HP", "Ataque", "Defesa"]
-            df[int_columns] = df[int_columns].astype(int)
+            for col in int_columns:
+                if col in df.columns:
+                    # Convert to numeric first to avoid FutureWarning
+                    df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(int)
 
-            def classify_pokemon(exp) -> str:
-                """
-                function to find whow strong is the pokemon based in experience_base
-                -params: exp - experience point of that pokemon
-                -retunr: str: return a string discribin how strog that pokemon is
-                """
-                if exp < 50:
-                    return "Fraco"
-                if 50 <= exp <= 100:
-                    return "Médio"
+            # Create a new column called Categoria and attributing in it how strong that pokemon is
+            df["Categoria"] = df["Experiencia_Base"].apply(classify_pokemon)
 
-                return "Forte"
+            return df
 
-        except:
+        except Exception as exception:
             self.log.error(
-                "Error in TransformPokemonData to using func: generate_graphic_exp_vs_type"
+                "Error in TransformPokemonData to using func: raw_data_to_df"
             )
-
-        # Create a new column called Categoria and attibuiting in it how strong that pokemon are
-        df["Categoria"] = df["Experiencia_Base"].apply(classify_pokemon)
-
-        return df
+            raise TransformError(str(exception)) from exception
 
     def generate_graphic_exp_vs_type(self, df) -> plt.Figure:
         """
         Function to generate a graphic by dataframe
         -params:  df: dataframe with pokemon informations
-        -retrun:  plt.Figure: a graphic with distribution os exp vs type
+        -return:  plt.Figure: a graphic with distribution of exp vs type
         """
-
-        # Collect tipes informations in dataframe
         try:
+            # Collect types information in dataframe
             explode_df = df.explode("Tipos")
             tipo_count = explode_df["Tipos"].value_counts()
 
-            # create graphic
+            # Create graphic
             grafico_pokemons_por_xp, eixos = plt.subplots()
             tipo_count.plot(
                 kind="bar",
@@ -132,33 +134,34 @@ class TransformPokemonData:
 
             return grafico_pokemons_por_xp
 
-        except:
+        except Exception as exception:
             self.log.error(
                 "Error in TransformPokemonData to using func: generate_graphic_exp_vs_type"
             )
+            raise TransformError(str(exception)) from exception
 
     def top_5_higher_exp_base(self, df) -> pd.DataFrame:
         """
         Function to generate table with pokemon with higher experience base
         -params:  df: dataframe with pokemon informations
-        -retrun:  pd.DataFrame: a dataframe with only 5 pokemons with higher exp
+        -return:  pd.DataFrame: a dataframe with only 5 pokemons with higher exp
         """
         try:
             top_5_exp_base = df.sort_values(
-                by="Experiencia_Base", ascending=False
+                by=["Experiencia_Base", "Id"], ascending=[False, True]
             ).head(5)
-
             return top_5_exp_base
-        except:
+        except Exception as exception:
             self.log.error(
                 "Error in TransformPokemonData to using func: top_5_higher_exp_base"
             )
+            raise TransformError(str(exception)) from exception
 
     def mean_statistics_by_type(self, df) -> pd.DataFrame:
         """
         Function to generate a table with the mean statistics (HP, Ataque, Defesa) of each Pokémon type.
         -params:  df: dataframe with pokemon informations
-        -retrun:  pd.DataFrame: A DataFrame with the mean statistics (HP, Ataque, Defesa) for each Pokémon type.
+        -return:  pd.DataFrame: A DataFrame with the mean statistics (HP, Ataque, Defesa) for each Pokémon type.
         """
         try:
             explode_df = df.explode("Tipos")
@@ -168,7 +171,8 @@ class TransformPokemonData:
             )
 
             return mean_by_type
-        except:
+        except Exception as exception:
             self.log.error(
                 "Error in TransformPokemonData to using func: mean_statistics_by_type"
             )
+            raise TransformError(str(exception)) from exception

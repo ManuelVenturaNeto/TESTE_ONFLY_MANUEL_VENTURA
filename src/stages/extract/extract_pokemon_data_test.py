@@ -1,7 +1,7 @@
 # pylint: disable=W0621
 
 import logging
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 import pytest
 from src.stages.extract.extract_pokemon_data import ExtractPokemonData
 from src.errors.extract_error import ExtractError
@@ -14,18 +14,20 @@ logger = logging.getLogger(__name__)
 @pytest.fixture
 def mock_extractor():
     """
-    Fixture para instanciar a classe ExtractPokemonData.
+    Fixture to instantiate the ExtractPokemonData class.
     """
     return ExtractPokemonData()
 
 
-def test_collect_essential_informations_success(mock_extractor):
+@pytest.mark.asyncio
+async def test_collect_essential_informations_success(mock_extractor):
     """
-    Testa a execução bem-sucedida de `collect_essential_informations`.
+    Test the successful execution of `collect_essential_informations`.
     """
-    # Mockando o método get_100_pokemons_from_api
-    mock_extractor.http_requester.get_100_pokemons_from_api = MagicMock(
+    # Mocking the get_100_pokemons_from_api method
+    mock_extractor.http_requester.get_100_pokemons_from_api = AsyncMock(
         return_value={
+            "status_code": 200,
             "informations": {
                 "results": [
                     {"name": "Pikachu", "url": "https://pokeapi.co/api/v2/pokemon/25/"},
@@ -34,14 +36,15 @@ def test_collect_essential_informations_success(mock_extractor):
                         "url": "https://pokeapi.co/api/v2/pokemon/6/",
                     },
                 ]
-            }
+            },
         }
     )
 
-    # Mockando o método get_unique_pokemon_data
-    mock_extractor.http_requester.get_unique_pokemon_data = MagicMock(
+    # Mocking the get_unique_pokemon_data method
+    mock_extractor.http_requester.get_unique_pokemon_data = AsyncMock(
         side_effect=[
             {
+                "name": "Pikachu",
                 "base_experience": 112,
                 "types": [{"type": {"name": "Electric"}}],
                 "stats": [
@@ -51,6 +54,7 @@ def test_collect_essential_informations_success(mock_extractor):
                 ],
             },
             {
+                "name": "Charizard",
                 "base_experience": 240,
                 "types": [{"type": {"name": "Fire"}}, {"type": {"name": "Flying"}}],
                 "stats": [
@@ -62,16 +66,16 @@ def test_collect_essential_informations_success(mock_extractor):
         ]
     )
 
-    result = mock_extractor.collect_essential_informations()
+    result = await mock_extractor.collect_essential_informations()
 
-    # check the tipe of data is currect
+    # Check the type of data is correct
     assert isinstance(result, ExtractContract)
 
-    # check if the the result have the expect mock data vales
+    # Check if the result has the expected mock data values
     assert "25" in result.raw_information_content
     assert "6" in result.raw_information_content
 
-    # check if the method call the exprected params to a mock element
+    # Check if the method called the expected params for a mock element
     pikachu = result.raw_information_content["25"]
     assert pikachu["Nome"] == "Pikachu"
     assert pikachu["Experiencia_Base"] == 112
@@ -93,19 +97,19 @@ def test_collect_essential_informations_success(mock_extractor):
     )
 
 
-def test_collect_essential_informations_error(mock_extractor):
+@pytest.mark.asyncio
+async def test_collect_essential_informations_error(mock_extractor):
     """
-    testing error
+    Test error handling in `collect_essential_informations`.
     """
-
-    # mocking an error in the function
-    mock_extractor.http_requester.get_100_pokemons_from_api = MagicMock(
+    # Mocking an error in the function
+    mock_extractor.http_requester.get_100_pokemons_from_api = AsyncMock(
         side_effect=Exception("Simulated API error")
     )
 
-    # testing if the error raises
+    # Testing if the error is raised
     with pytest.raises(ExtractError) as excinfo:
-        mock_extractor.collect_essential_informations()
+        await mock_extractor.collect_essential_informations()
 
     assert "Simulated API error" in str(excinfo.value)
 
